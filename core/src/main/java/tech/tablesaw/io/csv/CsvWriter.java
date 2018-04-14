@@ -14,7 +14,7 @@
 
 package tech.tablesaw.io.csv;
 
-import com.opencsv.CSVWriter;
+import de.siegmar.fastcsv.writer.CsvAppender;
 import tech.tablesaw.api.Table;
 
 import javax.annotation.concurrent.Immutable;
@@ -37,19 +37,21 @@ final public class CsvWriter {
      * @throws IOException if the write fails
      */
     public static void write(Table table, CsvWriteOptions options) throws IOException {
-
-        try (CSVWriter csvWriter = new CSVWriter(options.writer(),
-                        options.separator(),
-                        options.quoteChar(),
-                        options.escapeChar(),
-                        options.lineEnd())) {
+        
+        de.siegmar.fastcsv.writer.CsvWriter csvWriter = new de.siegmar.fastcsv.writer.CsvWriter();
+        csvWriter.setFieldSeparator(options.separator());
+//        options.quoteChar() // TODO
+//        options.escapeChar() // TODO
+        csvWriter.setLineDelimiter(options.lineEnd().toCharArray());
+        
+        try (CsvAppender csvAppender = csvWriter.append(options.writer())) {
 
             if (options.header()) {
                 String[] header = new String[table.columnCount()];
                 for (int c = 0; c < table.columnCount(); c++) {
                     header[c] = table.column(c).name();
                 }
-                csvWriter.writeNext(header);
+                csvAppender.appendLine(header);
             }
             for (int r = 0; r < table.rowCount(); r++) {
                 String[] entries = new String[table.columnCount()];
@@ -57,7 +59,7 @@ final public class CsvWriter {
                     table.get(r, c);
                     entries[c] = table.get(r, c);
                 }
-                csvWriter.writeNext(entries);
+                csvAppender.appendLine(entries);
             }
         }
     }

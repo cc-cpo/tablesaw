@@ -1,6 +1,8 @@
 package tech.tablesaw.io.html;
 
-import com.opencsv.CSVWriter;
+import de.siegmar.fastcsv.writer.CsvAppender;
+import de.siegmar.fastcsv.writer.CsvWriter;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -22,14 +24,15 @@ public class HtmlTableReader {
                             + ". You may file a feature request with the URL if you'd like your pagae to be supported");
         }
         Element table = tables.get(0);
-        try (StringWriter stringWriter = new StringWriter();
-             CSVWriter csvWriter = new CSVWriter(stringWriter)) {
+        try (StringWriter stringWriter = new StringWriter()) {
+            CsvWriter csvWriter = new CsvWriter();
+            CsvAppender csvAppender = csvWriter.append(stringWriter);
             for (Element row : table.select("tr")) {
                 Elements headerCells = row.getElementsByTag("th");
                 Elements cells = row.getElementsByTag("td");
                 String[] nextLine = Stream.concat(headerCells.stream(), cells.stream())
                         .map(Element::text).toArray(String[]::new);
-                csvWriter.writeNext(nextLine);
+                csvAppender.appendLine(nextLine);
             }
             return stringWriter.toString();
         }
