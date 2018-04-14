@@ -14,20 +14,22 @@
 
 package tech.tablesaw.columns.strings;
 
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.similarity.LevenshteinDistance;
-import tech.tablesaw.api.DoubleColumn;
-import tech.tablesaw.api.NumberColumn;
-import tech.tablesaw.api.StringColumn;
-import tech.tablesaw.columns.Column;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.similarity.LevenshteinDistance;
+
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+
+import tech.tablesaw.api.DoubleColumn;
+import tech.tablesaw.api.NumberColumn;
+import tech.tablesaw.api.StringColumn;
+import tech.tablesaw.columns.Column;
 
 /**
  * String utility functions. Each function takes one or more String columns as input and produces

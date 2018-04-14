@@ -1,7 +1,5 @@
 package tech.tablesaw.io.csv;
 
-import com.opencsv.CSVWriter;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -19,7 +17,7 @@ public class CsvWriteOptions {
     private final char escapechar;
     private final String lineEnd;
 
-    CsvWriteOptions(Builder builder) {
+    CsvWriteOptions(final Builder builder) {
         this.writer = builder.writer;
         this.header = builder.header;
         this.separator = builder.separator;
@@ -54,51 +52,51 @@ public class CsvWriteOptions {
 
     public static class Builder {
 
-        private Writer writer;
+        private final Writer writer;
         private boolean header = true;
         private char separator = ',';
-        private String lineEnd = CSVWriter.DEFAULT_LINE_END;
-        private char escapeChar = CSVWriter.DEFAULT_ESCAPE_CHARACTER;
-        private char quoteChar = CSVWriter.NO_QUOTE_CHARACTER;
+        private String lineEnd = "\n"; // CSVWriter.DEFAULT_LINE_END;
+        private char escapeChar = '"'; // CSVWriter.DEFAULT_ESCAPE_CHARACTER;
+        private char quoteChar = '\u0000'; // CSVWriter.NO_QUOTE_CHARACTER; TODO check - what's this for
 
-        public Builder(String fileName) throws IOException {
-            File file = Paths.get(fileName).toFile();
+        public Builder(final String fileName) throws IOException {
+            final File file = Paths.get(fileName).toFile();
             this.writer = new FileWriter(file);
         }
 
-        public Builder(File file) throws IOException {
+        public Builder(final File file) throws IOException {
             this.writer = new FileWriter(file);
         }
 
-        public Builder(Writer writer) {
+        public Builder(final Writer writer) {
             this.writer = writer;
         }
 
-        public Builder(OutputStream stream) {
+        public Builder(final OutputStream stream) {
             this.writer = new OutputStreamWriter(stream);
         }
 
-        public CsvWriteOptions.Builder separator(char separator) {
+        public CsvWriteOptions.Builder separator(final char separator) {
             this.separator = separator;
             return this;
         }
 
-        public CsvWriteOptions.Builder quoteChar(char quoteChar) {
+        public CsvWriteOptions.Builder quoteChar(final char quoteChar) {
             this.quoteChar = quoteChar;
             return this;
         }
 
-        public CsvWriteOptions.Builder escapeChar(char escapeChar) {
+        public CsvWriteOptions.Builder escapeChar(final char escapeChar) {
             this.escapeChar = escapeChar;
             return this;
         }
 
-        public CsvWriteOptions.Builder lineEnd(String lineEnd) {
+        public CsvWriteOptions.Builder lineEnd(final String lineEnd) {
             this.lineEnd = lineEnd;
             return this;
         }
 
-        public CsvWriteOptions.Builder header(boolean header) {
+        public CsvWriteOptions.Builder header(final boolean header) {
             this.header = header;
             return this;
         }
