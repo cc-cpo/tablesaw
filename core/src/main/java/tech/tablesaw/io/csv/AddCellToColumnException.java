@@ -15,6 +15,8 @@
 package tech.tablesaw.io.csv;
 
 import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This Exception wraps another Exception thrown while adding a cell to a column.
@@ -47,7 +49,7 @@ public class AddCellToColumnException extends RuntimeException {
     /**
      * The original line that caused the Exception
      */
-    private final String[] line;
+    private final List<String> line;
 
     /**
      * Creates a new instance of this Exception
@@ -58,7 +60,7 @@ public class AddCellToColumnException extends RuntimeException {
      * @param columnNames The column names stored as an array
      * @param line        The original line that caused the Exception
      */
-    public AddCellToColumnException(Exception e, int columnIndex, long rowNumber, String[] columnNames, String[] line) {
+    public AddCellToColumnException(Exception e, int columnIndex, long rowNumber, String[] columnNames, List<String> line) {
         super("Error while adding cell from row " + rowNumber + " and column " + columnNames[columnIndex] + "" +
                 "(position:" + columnIndex + "): " + e.getMessage(), e);
         this.columnIndex = columnIndex;
@@ -108,7 +110,7 @@ public class AddCellToColumnException extends RuntimeException {
             out.print(columnNames[i]);
             out.print(" : ");
             try {
-                out.println(line[i]);
+                out.println(line.get(i));
             } catch (ArrayIndexOutOfBoundsException aioobe) {
                 out.println("Unable to get cell " + i + " of this line");
             }

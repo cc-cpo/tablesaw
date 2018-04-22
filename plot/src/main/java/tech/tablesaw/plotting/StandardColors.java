@@ -20,7 +20,10 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Range;
-import com.opencsv.CSVReader;
+
+import de.siegmar.fastcsv.reader.CsvParser;
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRow;
 
 import javax.annotation.Nullable;
 import java.awt.*;
@@ -50,11 +53,13 @@ public class StandardColors {
 
         InputStream resourceAsStream = StandardColors.class.getResourceAsStream("/colors.txt");
 
-        String[] nextLine;
-        try (CSVReader reader = new CSVReader(new InputStreamReader(resourceAsStream))) {
+        CsvReader csvReader = new CsvReader();
+        
+        CsvRow csvRow;
+        try (CsvParser csvParser = csvReader.parse(new InputStreamReader(resourceAsStream))) {
             // Add the rows
-            while ((nextLine = reader.readNext()) != null) {
-                for (String colorData : nextLine) {
+            while ((csvRow = csvParser.nextRow()) != null) {
+                for (String colorData : csvRow.getFields()) {
                     String[] colorSplit = colorData.trim().split(" ");
                     String vHue = colorSplit[0];
                     String valueChroma = colorSplit[1];
@@ -81,11 +86,13 @@ public class StandardColors {
 
         InputStream resourceAsStream = StandardColors.class.getResourceAsStream("/colors.txt");
 
-        String[] nextLine;
-        try (CSVReader reader = new CSVReader(new InputStreamReader(resourceAsStream))) {
+        CsvReader csvReader = new CsvReader();
+        
+        CsvRow csvRow;
+        try (CsvParser csvParser = csvReader.parse(new InputStreamReader(resourceAsStream))) {
             // Add the rows
-            while ((nextLine = reader.readNext()) != null) {
-                for (String colorData : nextLine) {
+            while ((csvRow = csvParser.nextRow()) != null) {
+                for (String colorData : csvRow.getFields()) {
                     String[] colorSplit = colorData.trim().split(" ");
                     String vHue = colorSplit[0];
                     String valueChroma = colorSplit[1];

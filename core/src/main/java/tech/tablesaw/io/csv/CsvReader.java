@@ -50,11 +50,9 @@ import org.apache.commons.lang3.StringUtils;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
-import com.opencsv.CSVParser;
-import com.opencsv.CSVParserBuilder;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
 
+import de.siegmar.fastcsv.reader.CsvParser;
+import de.siegmar.fastcsv.reader.CsvRow;
 import tech.tablesaw.api.ColumnType;
 import tech.tablesaw.api.Table;
 import tech.tablesaw.columns.Column;
@@ -168,19 +166,20 @@ public class CsvReader {
         UnicodeBOMInputStream ubis = new UnicodeBOMInputStream(stream);
         ubis.skipBOM();
 
-        CSVParser csvParser = new CSVParserBuilder()
-                .withSeparator(options.separator())
-                .build();
+        de.siegmar.fastcsv.reader.CsvReader csvReader = new de.siegmar.fastcsv.reader.CsvReader();
+        csvReader.setFieldSeparator(options.separator());
 
-        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(ubis)).withCSVParser(csvParser).build()) {
+        try (InputStreamReader reader = new InputStreamReader(ubis)) {
+            CsvParser csvParser = csvReader.parse(reader);
             Table table = Table.create(options.tableName());
 
             String[] headerNames;
             if (options.header()) {
-                headerNames = reader.readNext();
-                if (headerNames == null) {
+                CsvRow csvRow = csvParser.nextRow();
+                if (csvRow == null) {
                     return table;
                 }
+                headerNames = csvRow.getFields().toArray(new String[]{});
             } else {
                 headerNames =  makeColumnNames(types);
             }
@@ -207,18 +206,18 @@ public class CsvReader {
             }
 
             long rowNumber = options.header() ? 1L : 0L;
-            String[] nextLine;
+            CsvRow nextLine;
 
             // Add the rows
-            while ((nextLine = reader.readNext()) != null) {
+            while ((nextLine = csvParser.nextRow()) != null) {
                 // for each column that we're including (not skipping)
                 int cellIndex = 0;
                 for (int columnIndex : columnIndexes) {
                     Column column = table.column(cellIndex);
                     try {
-                        column.appendCell(nextLine[columnIndex]);
+                        column.appendCell(nextLine.getField(columnIndex));
                     } catch (Exception e) {
-                        throw new AddCellToColumnException(e, columnIndex, rowNumber, columnNames, nextLine);
+                        throw new AddCellToColumnException(e, columnIndex, rowNumber, columnNames, nextLine.getFields());
                     }
                     cellIndex++;
                 }
@@ -259,16 +258,17 @@ public class CsvReader {
         BufferedReader streamReader = new BufferedReader(reader);
 
         Table table;
-        CSVParser csvParser = new CSVParserBuilder()
-                .withSeparator(columnSeparator)
-                .build();
-        try (CSVReader csvReader = new CSVReaderBuilder(streamReader).withCSVParser(csvParser).build()) {
+        
+        de.siegmar.fastcsv.reader.CsvReader csvReader = new de.siegmar.fastcsv.reader.CsvReader();
+        csvReader.setFieldSeparator(columnSeparator);
+        
+        try (CsvParser csvParser = csvReader.parse(streamReader)) {
 
             String[] columnNames;
             List<String> headerRow;
 
             String[] headerNames =
-                    header ? csvReader.readNext() : makeColumnNames(types);
+                    header ? csvParser.nextRow().getFields().toArray(new String[]{}) : makeColumnNames(types);
 
             headerRow = Lists.newArrayList(headerNames);
             columnNames = selectColumnNames(headerRow, types);
@@ -421,16 +421,23 @@ public class CsvReader {
         UnicodeBOMInputStream ubis = new UnicodeBOMInputStream(stream);
         ubis.skipBOM();
 
-        CSVParser csvParser = new CSVParserBuilder()
-                .withSeparator(delimiter)
-                .build();
-        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(ubis))
-                .withCSVParser(csvParser)
-                .withSkipLines(linesToSkip)
-                .build()) {
-            String[] nextLine;
+        de.siegmar.fastcsv.reader.CsvReader csvReader = new de.siegmar.fastcsv.reader.CsvReader();
+        csvReader.setFieldSeparator(delimiter);
+        
+        try (CsvParser csvParser = csvReader.parse(new InputStreamReader(ubis))) {
+            
+            int skipCount = linesToSkip;
+            
+            CsvRow csvRow;
             int nextRow = 0;
-            while ((nextLine = reader.readNext()) != null) {
+            while ((csvRow = csvParser.nextRow()) != null) {
+                
+                if (skipCount-- > 0) {
+                    continue;
+                }
+                
+                
+                String[] nextLine = csvRow.getFields().toArray(new String[]{});
                 // initialize the arrays to hold the strings. we don't know how many we need until we read the first row
                 if (rowCount == 0) {
                     for (int j = 0; j < nextLine.length; j++) {

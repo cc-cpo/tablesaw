@@ -23,8 +23,7 @@ import java.io.Writer;
 
 import javax.annotation.concurrent.Immutable;
 
-import com.opencsv.CSVWriter;
-
+import de.siegmar.fastcsv.writer.CsvAppender;
 import tech.tablesaw.api.Table;
 import tech.tablesaw.columns.Column;
 
@@ -49,19 +48,22 @@ final public class CsvWriter {
      * @throws IOException if the write fails
      */
     public static void write(Table table, Writer writer) throws IOException {
-        try (CSVWriter csvWriter = new CSVWriter(writer)) {
+        
+        de.siegmar.fastcsv.writer.CsvWriter csvWriter = new de.siegmar.fastcsv.writer.CsvWriter();
+        
+        try (CsvAppender csvAppender = csvWriter.append(writer)) {
             String[] header = new String[table.columnCount()];
             for (int c = 0; c < table.columnCount(); c++) {
                 header[c] = table.column(c).name();
             }
-            csvWriter.writeNext(header, false);
+            csvAppender.appendLine(header);
             for (int r = 0; r < table.rowCount(); r++) {
                 String[] entries = new String[table.columnCount()];
                 for (int c = 0; c < table.columnCount(); c++) {
                     table.get(r, c);
                     entries[c] = table.get(r, c);
                 }
-                csvWriter.writeNext(entries, false);
+                csvAppender.appendLine(entries);
             }
         }
     }
@@ -99,13 +101,14 @@ final public class CsvWriter {
      * @throws IOException if the write fails
      */
     public static void write(String fileName, Column column) throws IOException {
-        try (CSVWriter writer = new CSVWriter(new FileWriter(fileName))) {
+        de.siegmar.fastcsv.writer.CsvWriter csvWriter = new de.siegmar.fastcsv.writer.CsvWriter();
+        try (CsvAppender csvAppender = csvWriter.append(new FileWriter(fileName))) {
             String[] header = {column.name()};
-            writer.writeNext(header, false);
+            csvAppender.appendLine(header);
 
             for (int r = 0; r < column.size(); r++) {
                 String[] entries = {column.getString(r)};
-                writer.writeNext(entries, false);
+                csvAppender.appendLine(header);
             }
         }
     }
