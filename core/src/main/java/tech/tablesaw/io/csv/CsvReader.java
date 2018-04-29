@@ -163,21 +163,11 @@ public class CsvReader {
             ? new ByteArrayInputStream(bytes)
             : new FileInputStream(options.file());
 
-        UnicodeBOMInputStream ubis = new UnicodeBOMInputStream(stream);
-        ubis.skipBOM();
-        
-        CsvParserSettings parserSettings = new CsvParserSettings();
-        parserSettings.setLineSeparatorDetectionEnabled(true); // TODO discuss
-        CsvFormat csvFormat = new CsvFormat();
-        csvFormat.setDelimiter(options.separator());
-        parserSettings.setFormat(csvFormat);
-
-        CsvParser csvParser = new CsvParser(parserSettings);
-        
-        IterableResult<String[], ParsingContext> csvIterator = csvParser.iterate(ubis);
-        CsvWrapper reader = new UVCsvWrapper(csvIterator);
-        
-        {
+        try (UnicodeBOMInputStream ubis = new UnicodeBOMInputStream(stream)) {
+            ubis.skipBOM();
+ 
+            CsvReaderAdapter reader = CsvReaderAdapter.createWithOptions(ubis, options.separator());
+            
             Table table = Table.create(options.tableName());
 
             String[] headerNames;
@@ -256,24 +246,16 @@ public class CsvReader {
             throws IOException {
 
         FileInputStream fis = new FileInputStream(file);       
-        // make sure we don't have leading Unicode BOM
-        UnicodeBOMInputStream ubis = new UnicodeBOMInputStream(fis);
-        ubis.skipBOM();
         
-        CsvParserSettings parserSettings = new CsvParserSettings();
-        parserSettings.setLineSeparatorDetectionEnabled(true);
-        CsvFormat csvFormat = new CsvFormat();
-        csvFormat.setDelimiter(columnSeparator);
-        parserSettings.setFormat(csvFormat);
+        
+        try (UnicodeBOMInputStream ubis = new UnicodeBOMInputStream(fis)) {
+            // make sure we don't have leading Unicode BOM
+            ubis.skipBOM();
 
-        CsvParser csvParser = new CsvParser(parserSettings);
-        
-        IterableResult<String[], ParsingContext> csvIterator = csvParser.iterate(ubis);
-        CsvWrapper csvReader = new UVCsvWrapper(csvIterator);
-        
-        Table table;
-        {
+            Table table;
 
+            CsvReaderAdapter csvReader = CsvReaderAdapter.createWithOptions(ubis, columnSeparator);
+                
             String[] columnNames;
             List<String> headerRow;
 
@@ -295,8 +277,9 @@ public class CsvReader {
                 // get the index in the original table, which includes skipped fields
                 columnIndexes[i] = headerRow.indexOf(columnNames[i]);
             }
+
+            return table;
         }
-        return table;
     }
 
     /**
@@ -428,25 +411,11 @@ public class CsvReader {
         int rowCount = 0; // make sure we don't go over maxRows
 
         // make sure we don't have leading Unicode BOM
-        UnicodeBOMInputStream ubis = new UnicodeBOMInputStream(stream);
-        ubis.skipBOM();
+        try(UnicodeBOMInputStream ubis = new UnicodeBOMInputStream(stream)) {
+            ubis.skipBOM();
+            CsvReaderAdapter reader = CsvReaderAdapter.createWithOptions(ubis, delimiter);
+            reader.skipLines(linesToSkip);
 
-        CsvParserSettings parserSettings = new CsvParserSettings();
-        parserSettings.setLineSeparatorDetectionEnabled(true);
-        CsvFormat csvFormat = new CsvFormat();
-        csvFormat.setDelimiter(delimiter);
-        parserSettings.setFormat(csvFormat);
-
-        CsvParser csvParser = new CsvParser(parserSettings);
-        
-        IterableResult<String[], ParsingContext> csvIterator = csvParser.iterate(ubis);
-        CsvWrapper reader = new UVCsvWrapper(csvIterator);
-        
-        for (int i=0; i < linesToSkip; i++) {
-            reader.readNext();
-        }
-        
-        {
             String[] nextLine;
             int nextRow = 0;
             while ((nextLine = reader.readNext()) != null) {

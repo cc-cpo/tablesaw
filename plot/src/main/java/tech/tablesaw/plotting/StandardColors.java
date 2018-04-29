@@ -33,8 +33,8 @@ import com.google.common.collect.Range;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 
-import tech.tablesaw.io.csv.CsvWrapper;
-import tech.tablesaw.io.csv.UVCsvWrapper;
+import tech.tablesaw.io.csv.CsvReaderAdapter;
+import tech.tablesaw.io.csv.UnivocityReaderCsvWrapper;
 
 /**
  *
@@ -57,7 +57,7 @@ public class StandardColors {
 
         CsvParserSettings settings = new CsvParserSettings();
         CsvParser csvParser = new CsvParser(settings);
-        CsvWrapper reader = new UVCsvWrapper(csvParser.iterate(resourceAsStream));
+        CsvReaderAdapter reader = new UnivocityReaderCsvWrapper(csvParser.iterate(resourceAsStream));
 
         String[] nextLine;
         // Add the rows
@@ -88,7 +88,7 @@ public class StandardColors {
         
         CsvParserSettings settings = new CsvParserSettings();
         CsvParser csvParser = new CsvParser(settings);
-        CsvWrapper reader = new UVCsvWrapper(csvParser.iterate(resourceAsStream));
+        CsvReaderAdapter reader = new UnivocityReaderCsvWrapper(csvParser.iterate(resourceAsStream));
 
         String[] nextLine;
         // Add the rows
