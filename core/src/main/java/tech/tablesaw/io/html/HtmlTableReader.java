@@ -9,7 +9,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import com.opencsv.CSVWriter;
+import com.univocity.parsers.csv.CsvWriter;
+import com.univocity.parsers.csv.CsvWriterSettings;
 
 public class HtmlTableReader {
 
@@ -23,14 +24,16 @@ public class HtmlTableReader {
           + ". You may file a feature request with the URL if you'd like your pagae to be supported");
     }
     Element table = tables.get(0);
-    try (StringWriter stringWriter = new StringWriter();
-        CSVWriter csvWriter = new CSVWriter(stringWriter)) {
+    
+    try (StringWriter stringWriter = new StringWriter()) {
+        CsvWriterSettings settings = new CsvWriterSettings();
+        CsvWriter csvWriter = new CsvWriter(stringWriter, settings);
       for (Element row : table.select("tr")) {
         Elements headerCells = row.getElementsByTag("th");
         Elements cells = row.getElementsByTag("td");
         String[] nextLine = Stream.concat(headerCells.stream(), cells.stream())
             .map(cell -> cell.text()).toArray(size -> new String[size]);
-        csvWriter.writeNext(nextLine);
+        csvWriter.writeRow(nextLine);
       }      
       return stringWriter.toString();
     }

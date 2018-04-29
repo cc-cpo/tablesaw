@@ -26,14 +26,11 @@ import static tech.tablesaw.api.ColumnType.LONG_INT;
 import static tech.tablesaw.api.ColumnType.SHORT_INT;
 import static tech.tablesaw.api.ColumnType.SKIP;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -50,10 +47,11 @@ import org.apache.commons.lang3.StringUtils;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
-import com.opencsv.CSVParser;
-import com.opencsv.CSVParserBuilder;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
+import com.univocity.parsers.common.IterableResult;
+import com.univocity.parsers.common.ParsingContext;
+import com.univocity.parsers.csv.CsvFormat;
+import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
 
 import tech.tablesaw.api.ColumnType;
 import tech.tablesaw.api.Table;
@@ -167,12 +165,19 @@ public class CsvReader {
 
         UnicodeBOMInputStream ubis = new UnicodeBOMInputStream(stream);
         ubis.skipBOM();
+        
+        CsvParserSettings parserSettings = new CsvParserSettings();
+        parserSettings.setLineSeparatorDetectionEnabled(true); // TODO discuss
+        CsvFormat csvFormat = new CsvFormat();
+        csvFormat.setDelimiter(options.separator());
+        parserSettings.setFormat(csvFormat);
 
-        CSVParser csvParser = new CSVParserBuilder()
-                .withSeparator(options.separator())
-                .build();
-
-        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(ubis)).withCSVParser(csvParser).build()) {
+        CsvParser csvParser = new CsvParser(parserSettings);
+        
+        IterableResult<String[], ParsingContext> csvIterator = csvParser.iterate(ubis);
+        CsvWrapper reader = new UVCsvWrapper(csvIterator);
+        
+        {
             Table table = Table.create(options.tableName());
 
             String[] headerNames;
@@ -255,14 +260,19 @@ public class CsvReader {
         UnicodeBOMInputStream ubis = new UnicodeBOMInputStream(fis);
         ubis.skipBOM();
         
-        Reader reader = new InputStreamReader(ubis);
-        BufferedReader streamReader = new BufferedReader(reader);
+        CsvParserSettings parserSettings = new CsvParserSettings();
+        parserSettings.setLineSeparatorDetectionEnabled(true);
+        CsvFormat csvFormat = new CsvFormat();
+        csvFormat.setDelimiter(columnSeparator);
+        parserSettings.setFormat(csvFormat);
 
+        CsvParser csvParser = new CsvParser(parserSettings);
+        
+        IterableResult<String[], ParsingContext> csvIterator = csvParser.iterate(ubis);
+        CsvWrapper csvReader = new UVCsvWrapper(csvIterator);
+        
         Table table;
-        CSVParser csvParser = new CSVParserBuilder()
-                .withSeparator(columnSeparator)
-                .build();
-        try (CSVReader csvReader = new CSVReaderBuilder(streamReader).withCSVParser(csvParser).build()) {
+        {
 
             String[] columnNames;
             List<String> headerRow;
@@ -421,13 +431,22 @@ public class CsvReader {
         UnicodeBOMInputStream ubis = new UnicodeBOMInputStream(stream);
         ubis.skipBOM();
 
-        CSVParser csvParser = new CSVParserBuilder()
-                .withSeparator(delimiter)
-                .build();
-        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(ubis))
-                .withCSVParser(csvParser)
-                .withSkipLines(linesToSkip)
-                .build()) {
+        CsvParserSettings parserSettings = new CsvParserSettings();
+        parserSettings.setLineSeparatorDetectionEnabled(true);
+        CsvFormat csvFormat = new CsvFormat();
+        csvFormat.setDelimiter(delimiter);
+        parserSettings.setFormat(csvFormat);
+
+        CsvParser csvParser = new CsvParser(parserSettings);
+        
+        IterableResult<String[], ParsingContext> csvIterator = csvParser.iterate(ubis);
+        CsvWrapper reader = new UVCsvWrapper(csvIterator);
+        
+        for (int i=0; i < linesToSkip; i++) {
+            reader.readNext();
+        }
+        
+        {
             String[] nextLine;
             int nextRow = 0;
             while ((nextLine = reader.readNext()) != null) {
