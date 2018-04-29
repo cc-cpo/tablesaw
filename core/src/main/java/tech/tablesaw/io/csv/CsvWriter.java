@@ -23,8 +23,6 @@ import java.io.Writer;
 
 import javax.annotation.concurrent.Immutable;
 
-import com.univocity.parsers.csv.CsvWriterSettings;
-
 import tech.tablesaw.api.Table;
 import tech.tablesaw.columns.Column;
 
@@ -50,8 +48,7 @@ final public class CsvWriter {
      */
     public static void write(Table table, Writer writer) throws IOException {
         
-        CsvWriterSettings settings = new CsvWriterSettings();
-        com.univocity.parsers.csv.CsvWriter csvWriter = new com.univocity.parsers.csv.CsvWriter(writer, settings);
+        UnivocityCsvWriterAdapter csvWriter = CsvWriterAdapter.create(writer);
         
         {
             String[] header = new String[table.columnCount()];
@@ -59,7 +56,7 @@ final public class CsvWriter {
                 header[c] = table.column(c).name();
             }
             // TODO double-check
-            csvWriter.writeHeaders(header);
+            csvWriter.writeNext(header);
 //            csvWriter.writeNext(header, false);
             for (int r = 0; r < table.rowCount(); r++) {
                 String[] entries = new String[table.columnCount()];
@@ -67,7 +64,7 @@ final public class CsvWriter {
                     table.get(r, c);
                     entries[c] = table.get(r, c);
                 }
-                csvWriter.writeRow(entries);
+                csvWriter.writeNext(entries);
 //                csvWriter.writeNext(entries, false);
             }
         }
@@ -107,16 +104,14 @@ final public class CsvWriter {
      */
     public static void write(String fileName, Column column) throws IOException {
         
-        CsvWriterSettings settings = new CsvWriterSettings();
-        com.univocity.parsers.csv.CsvWriter writer = new com.univocity.parsers.csv.CsvWriter(new File(fileName), settings);
-        
-        {
+        try (FileWriter fileWriter = new FileWriter(fileName)) {
+            UnivocityCsvWriterAdapter writer = CsvWriterAdapter.create(fileWriter);
             String[] header = {column.name()};
-            writer.writeHeaders(header);
+            writer.writeNext(header);
 
             for (int r = 0; r < column.size(); r++) {
                 String[] entries = {column.getString(r)};
-                writer.writeRow(entries);
+                writer.writeNext(entries);
             }
         }
     }
